@@ -39,6 +39,7 @@ def load_stopwords():
 @st.cache_data
 def preprocess(df):
     df = df.copy()
+    # Label mapping: -1 = cyberbullying → 1, 0 = non-bullying → 0
     df['label'] = df['label'].replace(-1, 1)
     df['headline'] = df['headline'].astype(str).apply(clean_text)
     return df
@@ -91,8 +92,21 @@ else:
 st.subheader("📄 Data Preview")
 st.dataframe(df.head())
 
+# Show original label distribution
+st.subheader("🔍 Original Label Distribution")
+fig1, ax1 = plt.subplots()
+sns.countplot(x='label', data=df, ax=ax1)
+st.pyplot(fig1)
+
 if 'headline' in df.columns and 'label' in df.columns:
     df_clean = preprocess(df)
+
+    # Show cleaned label distribution
+    st.subheader("✅ Cleaned Label Distribution")
+    fig2, ax2 = plt.subplots()
+    sns.countplot(x='label', data=df_clean, ax=ax2)
+    st.pyplot(fig2)
+
     X_train, X_test, y_train, y_test = train_test_split(df_clean['headline'], df_clean['label'], test_size=0.33, random_state=42)
     stopword_list = load_stopwords()
     X_train_vec, X_test_vec = vectorize_data(X_train, X_test, stopword_list)
@@ -103,9 +117,5 @@ if 'headline' in df.columns and 'label' in df.columns:
     st.subheader("📈 Evaluation Report")
     st.json(report)
 
-    st.subheader("📊 Class Distribution")
-    fig, ax = plt.subplots()
-    sns.countplot(x='label', data=df_clean, ax=ax)
-    st.pyplot(fig)
 else:
     st.error("CSV must contain both 'headline' and 'label' columns.")
